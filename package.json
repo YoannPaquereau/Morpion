@@ -1,0 +1,24 @@
+{
+  "name": "morpion",
+  "version": "1.0.0",
+  "description": "morpion game",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YoannPaquereau/Morpion.git"
+  },
+  "author": "Yoann Paquereau",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YoannPaquereau/Morpion/issues"
+  },
+  "homepage": "https://github.com/YoannPaquereau/Morpion#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}

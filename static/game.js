@@ -1,3 +1,24 @@
+var socket = io.connect('http://localhost:8080');
+
+document.getElementById("createSubmit").addEventListener("click", function(event){
+    event.preventDefault();
+    socket.emit('createGame', "");
+  });
+
+  document.getElementById("joinSubmit").addEventListener("click", function(event){
+    event.preventDefault();
+    socket.emit('joinGame', { room: document.getElementById('room').value });
+  });
+
+  socket.on('newGame', function(data) {
+      document.getElementById("formGame").remove();
+      console.log(data);
+  });
+
+  socket.on('err', function(data) {
+    document.getElementById('err').value = data.message;
+  });
+
 function startGame() {
     myGameArea.start();
   }
