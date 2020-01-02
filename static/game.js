@@ -1,4 +1,6 @@
 var socket = io.connect('http://localhost:8080');
+var room;
+var player = "player";
 
 document.getElementById("createSubmit").addEventListener("click", function(event){
     event.preventDefault();
@@ -8,15 +10,26 @@ document.getElementById("createSubmit").addEventListener("click", function(event
   document.getElementById("joinSubmit").addEventListener("click", function(event){
     event.preventDefault();
     socket.emit('joinGame', { room: document.getElementById('room').value });
+    player += "2";
   });
 
   socket.on('newGame', function(data) {
       document.getElementById("formGame").remove();
-      console.log(data);
+      player += "1";
   });
 
   socket.on('err', function(data) {
-    document.getElementById('err').value = data.message;
+    document.getElementById('err').innerHTML = data.message;
+  });
+
+  socket.on('startGame', function(data) {
+    room = data.room;
+    startGame();
+    if (player == "player" + data.turn) {
+        myGameArea.canvas.addEventListener('click',  function(event) {
+            getTick(event);
+        });
+    }
   });
 
 function startGame() {
@@ -37,10 +50,6 @@ function startGame() {
           ["", "", ""],
           ["", "", ""]
       ];
-
-      this.canvas.addEventListener('click',  function(event) {
-          getTick(event);
-      });
 
       drawGame();
     }
@@ -84,16 +93,16 @@ function startGame() {
         }
 
         if (myGameArea.checkbox[line][column] == "" && column != -1) {
-
-            myGameArea.checkbox[line][column] = myGameArea.player;
-            drawCase(line, column, myGameArea.player);
+            socket.emit('sendTick', { room: room, line: line, column: column, player: player });
         }        
     }
 
-    function drawCase(line, column, player) {
-        if (player == "X") {
-            var x = 25 + 150*column;
-            var y = 25 + 150*line;
+    socket.on('drawCase', function (data) {
+        myGameArea.checkbox[data.line][data.column] = data.player;
+
+        if (data.player == "player1") {
+            var x = 25 + 150*data.column;
+            var y = 25 + 150*data.line;
 
             myGameArea.context.beginPath();
             myGameArea.context.moveTo(x, y);
@@ -106,13 +115,13 @@ function startGame() {
             myGameArea.context.stroke();
         }
 
-        else if(player == "O") {
-            var x = 25 + 150*column + 75;
-            var y = 25 + 150*line + 75;
+        else if(data.player == "player2") {
+            var x = 25 + 150*data.column + 75;
+            var y = 25 + 150*data.line + 75;
 
             myGameArea.context.beginPath();
             myGameArea.context.arc(x, y, 60, 0, 2*Math.PI,  false);
             myGameArea.context.stroke();
         }
-    }
+    });
 

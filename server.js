@@ -18,20 +18,23 @@ var rooms = 0;
 io.sockets.on('connection', function (socket) {
     socket.on('createGame', function(data) {
         socket.join('room-' + ++rooms);
-        socket.emit('newGame', "room-" + rooms);
+        socket.emit('newGame', { room:"room-" + rooms });
     });
 
     socket.on('joinGame', function(data) {
-        var room = io.nsps['/'].adapter.rooms(data.room);
+        var room = io.nsps['/'].adapter.rooms[data.room];
+        console.log(room);
         if (room && room.length == 1) {
             socket.join(data.room);
-            socket.broadcast.to(data.room).emit('player1', {});
-            socket.emit('player2', {});
+           io.in(data.room).emit('startGame', { room: data.room, turn:  Math.floor(Math.random() * (3 - 1) + 1) });
         }
         else {
             socket.emit('err', {message: 'Partie pleine ou indisponible'});
         }
-        socket.emit('newGame', 'room-' + data);
+    });
+
+    socket.on('sendTick', function(data) {
+        io.in(data.room).emit('drawCase', data);
     });
 });
 
