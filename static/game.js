@@ -22,13 +22,39 @@ document.getElementById("createSubmit").addEventListener("click", function(event
     document.getElementById('err').innerHTML = data.message;
   });
 
+  function onClick(data) {
+        myGameArea.canvas.addEventListener('click',   
+            function getTick(event) {
+                var rect =  myGameArea.canvas.getBoundingClientRect();
+                var x = event.clientX - rect.left;
+                var y = event.clientY - rect.top;
+                
+                var line = -1;
+                var column = -1;
+        
+                if (y > 25 && y < 150+25) line = 0;
+                else if (y > 150+25 && y < 150*2+25) line = 1;
+                else if (y > 150*2+25 && y < myGameArea.canvas.height - 25) line = 2; 
+        
+                if (line != -1) {
+                    if (x > 25 && x < 150+25) column = 0;
+                    else if (x > 150+25 && x < 150*2+25) column = 1;
+                    else if (x > 150*2+25 && x < myGameArea.canvas.width - 25) column = 2; 
+                }
+        
+                if (myGameArea.checkbox[line][column] == "" && column != -1) {
+                    socket.emit('sendTick', { room: room, line: line, column: column, player: player });
+                    myGameArea.canvas.removeEventListener('click',  getTick);
+                }        
+            }
+        );
+    }
+
   socket.on('startGame', function(data) {
     room = data.room;
     startGame();
     if (player == "player" + data.turn) {
-        myGameArea.canvas.addEventListener('click',  function(event) {
-            getTick(event);
-        });
+        onClick();
     }
   });
 
@@ -74,29 +100,6 @@ function startGame() {
         }
     }
 
-    function getTick(event) {
-        var rect =  myGameArea.canvas.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
-        
-        var line = -1;
-        var column = -1;
-
-        if (y > 25 && y < 150+25) line = 0;
-        else if (y > 150+25 && y < 150*2+25) line = 1;
-        else if (y > 150*2+25 && y < myGameArea.canvas.height - 25) line = 2; 
-
-        if (line != -1) {
-            if (x > 25 && x < 150+25) column = 0;
-            else if (x > 150+25 && x < 150*2+25) column = 1;
-            else if (x > 150*2+25 && x < myGameArea.canvas.width - 25) column = 2; 
-        }
-
-        if (myGameArea.checkbox[line][column] == "" && column != -1) {
-            socket.emit('sendTick', { room: room, line: line, column: column, player: player });
-        }        
-    }
-
     socket.on('drawCase', function (data) {
         myGameArea.checkbox[data.line][data.column] = data.player;
 
@@ -124,4 +127,46 @@ function startGame() {
             myGameArea.context.stroke();
         }
     });
+
+    socket.on('changeTurn', function(data) {
+        if (data.player != player) {
+            onClick();
+        } 
+    });
+
+    function endGame() {
+        var end = false;
+        var count= 0;
+        for (var i = 0; i < 3; i++) {
+            for (var j = 0; j < 3; j++) {
+                if (myGameArea.checkbox[i][j] == player) ++count;
+            }
+            if (count == 3) {
+                end = true;
+                i = 3;
+            }
+            else count = 0;
+        }
+
+        if (!end) {
+            for (var i = 0; i < 3; i++) {
+                for (var j = 0; j < 3; j++) {
+                    if (myGameArea.checkbox[j][i] == player) ++count;
+                }
+                if (count == 3) {
+                    end = true;
+                    i = 3;
+                }
+                else count = 0;
+            }
+
+            if (!end) {
+                if ((myGameArea.checkbox[0][0] == myGameArea.checkbox[1][1] == myGameArea.checkbox[2][2] == player) || (myGameArea.checkbox[0][2] == myGameArea.checkbox[1][1] == myGameArea.checkbox[2][0] == player)) {
+                    end = true;
+                }
+            }
+        }
+
+        return end;
+    }
 

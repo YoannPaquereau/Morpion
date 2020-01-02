@@ -35,6 +35,7 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('sendTick', function(data) {
         io.in(data.room).emit('drawCase', data);
+        io.in(data.room).emit('changeTurn', { player: data.player });
     });
 });
 
