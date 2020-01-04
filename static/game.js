@@ -23,6 +23,7 @@ document.getElementById("createSubmit").addEventListener("click", function(event
   });
 
   function onClick(data) {
+      console.log("Your turn");
         myGameArea.canvas.addEventListener('click',   
             function getTick(event) {
                 var rect =  myGameArea.canvas.getBoundingClientRect();
@@ -76,6 +77,7 @@ function startGame() {
           ["", "", ""],
           ["", "", ""]
       ];
+      this.turn = 1;
 
       drawGame();
     }
@@ -129,17 +131,22 @@ function startGame() {
     });
 
     socket.on('changeTurn', function(data) {
-        if (data.player != player) {
+        console.log(myGameArea.turn);
+        if (myGameArea.turn > 4) {
+            if (endGame(data.player)) console.log("Fin de la partie. "+data.player+" a gagné !");
+            else if (myGameArea.turn >= 9) console.log("Match nul !");
+        }
+        if (++myGameArea.turn  <= 9 && data.player != player && !endGame(data.player)) {
             onClick();
-        } 
+        }
     });
 
-    function endGame() {
+    function endGame(playerCheck) {
         var end = false;
         var count= 0;
         for (var i = 0; i < 3; i++) {
             for (var j = 0; j < 3; j++) {
-                if (myGameArea.checkbox[i][j] == player) ++count;
+                if (myGameArea.checkbox[i][j] == playerCheck) ++count;
             }
             if (count == 3) {
                 end = true;
@@ -151,7 +158,7 @@ function startGame() {
         if (!end) {
             for (var i = 0; i < 3; i++) {
                 for (var j = 0; j < 3; j++) {
-                    if (myGameArea.checkbox[j][i] == player) ++count;
+                    if (myGameArea.checkbox[j][i] == playerCheck) ++count;
                 }
                 if (count == 3) {
                     end = true;
@@ -161,7 +168,7 @@ function startGame() {
             }
 
             if (!end) {
-                if ((myGameArea.checkbox[0][0] == myGameArea.checkbox[1][1] == myGameArea.checkbox[2][2] == player) || (myGameArea.checkbox[0][2] == myGameArea.checkbox[1][1] == myGameArea.checkbox[2][0] == player)) {
+                if ((myGameArea.checkbox[0][0] == myGameArea.checkbox[1][1] == myGameArea.checkbox[2][2] == playerCheck) || (myGameArea.checkbox[0][2] == myGameArea.checkbox[1][1] == myGameArea.checkbox[2][0] == playerCheck)) {
                     end = true;
                 }
             }
