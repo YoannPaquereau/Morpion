@@ -33,8 +33,15 @@ io.sockets.on('connection', function (socket) {
                 ["", "", ""]
             ];
             roomdata.set(socket, "checkbox", gameBoard);
+            roomdata.set(socket, "countTurn", 1);
              roomdata.get(socket, 'players').player2 = data.player;
-            io.in(data.room).emit('startGame', { room: data.room, turn:  Math.floor(Math.random() * (3 - 1) + 1) , players: roomdata.get(socket, "players")});
+             var turn = Math.floor(Math.random() * (3 - 1) + 1);
+             if (turn == 1)
+                turn = roomdata.get(socket, 'players').player1;
+            else
+                turn = roomdata.get(socket, 'players').player2;
+
+                io.in(data.room).emit('startGame', { room: data.room, turn: turn, players: roomdata.get(socket, "players")});
         }
         else {
             socket.emit('err', {message: 'Partie pleine ou indisponible'});
@@ -43,13 +50,23 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('sendTick', function(data) {
         if (roomdata.get(socket, "checkbox")[data.line][data.column] == "") {
+            var count = roomdata.get(socket, "countTurn") + 1;
+            roomdata.set(socket, "countTurn", count);
             roomdata.get(socket, "checkbox")[data.line][data.column] = data.player;
+            otherPlayer = (data.player == roomdata.get(socket, "players").player1) ? roomdata.get(socket, "players").player1 : roomdata.get(socket, "players").player2; 
 
-            io.in(data.room).emit('drawCase', { checkbox: roomdata.get(socket, "checkbox") });
-            if (!endGame(data.player, roomdata.get(socket, "checkbox")))
-                io.in(data.room).emit('changeTurn', { player: data.player });
+            io.in(data.room).emit('drawCase', { checkbox: roomdata.get(socket, "checkbox") , player2: otherPlayer });
+            if (!endGame(data.player, roomdata.get(socket, "checkbox"))) {
+                if (roomdata.get(socket, "countTurn") > 9)
+                    io.in(data.room).emit('draw', "");
+                else
+                    io.in(data.room).emit('changeTurn', { player: data.player });
+            }
             else
                 io.in(data.room).emit('endgame', { player: data.player });
+        }
+        else {
+            socket.emit('retry', "");
         }
     });
 });

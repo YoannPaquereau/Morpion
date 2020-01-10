@@ -1,23 +1,22 @@
 var socket = io.connect('http://localhost:8080');
 var room;
-var player = "player";
+var player;
+
 
 document.getElementById("createSubmit").addEventListener("click", function(event){
     event.preventDefault();
-    var player = document.getElementById('playerName').value;
+    player = document.getElementById('playerName').value;
     socket.emit('createGame', {player: player});
   });
 
   document.getElementById("joinSubmit").addEventListener("click", function(event){
     event.preventDefault();
-    var player = document.getElementById('playerName').value;
+    player = document.getElementById('playerName').value;
     socket.emit('joinGame', { room: document.getElementById('room').value, player: player});
-    player += "2";
   });
 
   socket.on('newGame', function(data) {
       document.getElementById("formGame").remove();
-      player += "1";
   });
 
   socket.on('err', function(data) {
@@ -53,18 +52,21 @@ document.getElementById("createSubmit").addEventListener("click", function(event
                         player: player
                     });
                     myGameArea.canvas.removeEventListener('click',  getTick);
-                }        
+                } 
             }
         );
     }
 
+    socket.on('retry', function(data) {
+        onClick();
+    });
+
   socket.on('startGame', function(data) {
     room = data.room;
     startGame();
-    if (player == "player" + data.turn) {
+    if (player == data.turn) {
         onClick();
     }
-    console.log(data.players);
   });
 
 function startGame() {
@@ -84,7 +86,6 @@ function startGame() {
         ["", "", ""]
       ];
       document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-      this.turn = 1;
 
       drawGame();
     }
@@ -111,24 +112,24 @@ function startGame() {
 
     socket.on('drawCase', function (data) {
         myGameArea.checkbox = data.checkbox;
-            
+        console.log(data.player2);
         for (var i = 0; i < 3; i++) {
             for(var j = 0; j < 3; j++) {
-                if (myGameArea.checkbox[i][j] == "player1") {
-                    var x = 25 + 150*j;
-                    var y = 25 + 150*i;
+                if (myGameArea.checkbox[i][j] == player) {
+                    var x = 40 + 150*j;
+                    var y = 40 + 150*i;
         
                     myGameArea.context.beginPath();
                     myGameArea.context.moveTo(x, y);
-                    myGameArea.context.lineTo(x + 150, y + 150);
+                    myGameArea.context.lineTo(x + 120, y + 120);
                     myGameArea.context.stroke();
         
                     myGameArea.context.beginPath();
-                    myGameArea.context.moveTo(x +150, y);
-                    myGameArea.context.lineTo(x, y +150);
+                    myGameArea.context.moveTo(x +120, y);
+                    myGameArea.context.lineTo(x, y +120);
                     myGameArea.context.stroke();
                 }
-                else if(myGameArea.checkbox[i][j]  == "player2") {
+                else if(myGameArea.checkbox[i][j]  == data.player2) {
                     var x = 25 + 150*j + 75;
                     var y = 25 + 150*i + 75;
         
@@ -141,22 +142,21 @@ function startGame() {
     });
 
     socket.on('changeTurn', function(data) {
-        console.log(myGameArea.turn);
-        if (myGameArea.turn > 4) {
-            if (endGame(data.player)) console.log("Fin de la partie. "+data.player+" a gagné !");
-            else if (myGameArea.turn >= 9) console.log("Match nul !");
-        }
-        if (++myGameArea.turn  <= 9 && data.player != player) {
+        if (data.player != player) {
             onClick();
         }
     });
 
     socket.on('endgame', function(data) {
         console.log("Fin de la partie.");
-        if (data.player == myGameArea.player)
+        if (data.player == player)
             console.log("Vous avez gagné !");
         else
             console.log(data.player + " a gagné !");
+    });
+    
+    socket.on('draw', function(data) {
+        console.log("Match nul !");
     });
     
 
