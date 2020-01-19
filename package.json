@@ -19,6 +19,7 @@
   "homepage": "https://github.com/YoannPaquereau/Morpion#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "roomdata": "^1.1.7-b",
     "socket.io": "^2.3.0"
   },
   "optionalDependencies": {
